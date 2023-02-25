@@ -1,10 +1,15 @@
 import os
-from urllib.parse import urljoin, urlparse, urlsplit
+from urllib.parse import urljoin, urlsplit
 import requests
 from pathvalidate import sanitize_filename
 from pathlib import Path
 from bs4 import BeautifulSoup
 from requests import HTTPError
+
+
+def check_for_redirect(response):
+    if response.status_code == 302 or response.status_code == 301:
+        raise HTTPError
 
 
 def get_download_url(response):
@@ -17,26 +22,29 @@ def get_download_url(response):
     return download_url
 
 
-def download_comments(response):
+def parse_book_page(response):
     book_comments = []
-    soup = BeautifulSoup(response.text, 'lxml')
-    comments = soup.find_all(class_="texts")
-    for comment in comments:
-        soup = BeautifulSoup(str(comment), 'lxml')
-        text_comment = soup.find(class_="black")
-        book_comments.append(text_comment.text)
-    return book_comments
-
-
-def get_genres(response):
     book_category = []
     soup = BeautifulSoup(response.text, 'lxml')
+
+    name_book, author = soup.find('h1').text.split('::')
+    name_book = name_book.strip()
+    author = author.strip()
+
+    comments = soup.find_all(class_="texts")
+    for comment in comments:
+        soup_comment = BeautifulSoup(str(comment), 'lxml')
+        text_comment = soup_comment.find(class_="black")
+        book_comments.append(text_comment.text)
+
     categories = soup.find_all('span', class_="d_book")
-    soup = BeautifulSoup(str(categories), 'lxml')
-    check = soup.find_all('a')
+    soup_category = BeautifulSoup(str(categories), 'lxml')
+    check = soup_category.find_all('a')
     for category in check:
         book_category.append(category.contents[0])
-    return book_category
+
+    info_book = {'name_book': name_book, 'author': author, 'comments': book_comments, 'category': book_category}
+    return info_book
 
 
 def download_img(url, folder):
@@ -61,17 +69,6 @@ def download_img(url, folder):
         print('Нет изображения')
 
 
-def get_name_book(response):
-    soup = BeautifulSoup(response.text, 'lxml')
-    name_book, author = soup.find('h1').text.split('::')
-    return name_book.strip()
-
-
-def check_for_redirect(response):
-    if response.status_code == 302 or response.status_code == 301:
-        raise HTTPError
-
-
 def download_txt(url, id, folder):
     Path(folder).mkdir(parents=True, exist_ok=True) 
     response = requests.get(url, allow_redirects=False)
@@ -79,20 +76,17 @@ def download_txt(url, id, folder):
 
     try:
         check_for_redirect(response)
-        name_book = sanitize_filename(f'{id}. {get_name_book(response)}.txt')
+        book_page = parse_book_page(response)
+        name_book = book_page['name_book']
+        path_book = sanitize_filename(f'{id}. {name_book}.txt')
         try:
             download_url = get_download_url(response)
             response_download = requests.get(download_url, allow_redirects=False)
             response_download.raise_for_status()
             check_for_redirect(response_download)
-            filepath = os.path.join(folder, name_book)
+            filepath = os.path.join(folder, path_book)
             with open(filepath, 'wb') as file:
                 file.write(response_download.content)
-            print(f'Название книги {name_book}')
-            print(get_genres(response))
-            print('Комментарии')
-            for comment in download_comments(response):
-                print(comment)
         except:
             print('Error')
 
