@@ -28,6 +28,16 @@ def download_comments(response):
     return book_comments
 
 
+def get_genres(response):
+    book_category = []
+    soup = BeautifulSoup(response.text, 'lxml')
+    categories = soup.find_all('span', class_="d_book")
+    soup = BeautifulSoup(str(categories), 'lxml')
+    check = soup.find_all('a')
+    for category in check:
+        book_category.append(category.contents[0])
+    return book_category
+
 
 def download_img(url, folder):
 
@@ -78,7 +88,9 @@ def download_txt(url, id, folder):
             filepath = os.path.join(folder, name_book)
             with open(filepath, 'wb') as file:
                 file.write(response_download.content)
-            print(name_book)
+            print(f'Название книги {name_book}')
+            print(get_genres(response))
+            print('Комментарии')
             for comment in download_comments(response):
                 print(comment)
         except:
