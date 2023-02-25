@@ -1,4 +1,5 @@
 import os
+from urllib.parse import urljoin, urlparse, urlsplit
 import requests
 from pathvalidate import sanitize_filename
 from pathlib import Path
@@ -12,8 +13,27 @@ def get_download_url(response):
         url = soup.find('a', string="скачать txt")['href']
     except:
         print('Нет книги')
-    download_url = 'https://tululu.org/' + url
+    download_url = urljoin('https://tululu.org/', url)
     return download_url
+
+
+def download_img(response, folder='images/'):
+    Path(folder).mkdir(parents=True, exist_ok=True) 
+    soup = BeautifulSoup(response.text, 'lxml')
+    try:
+        url = soup.find(class_="bookimage").find('a').find('img')['src']
+        img_url = urljoin('https://tululu.org/', url)
+
+        response_download = requests.get(img_url, allow_redirects=False)
+        response_download.raise_for_status()
+
+        name_img = url.split('/')[-1]
+        filepath = os.path.join(folder, name_img)
+        with open(filepath, 'wb') as file:
+            file.write(response.content)
+    except:
+        print('Нет изображения')
+    return img_url
 
 
 def get_name_book(response):
@@ -42,9 +62,12 @@ def download_txt(url, id, folder='books/'):
             response_download.raise_for_status()
             check_for_redirect(response_download)
 
+
             filepath = os.path.join(folder, name_book)
             with open(filepath, 'wb') as file:
                 file.write(response_download.content)
+
+            download_img(response)
         except:
             print('Error')
 
@@ -55,4 +78,3 @@ def download_txt(url, id, folder='books/'):
 if __name__ == "__main__":
     for id in range(1, 11):
 	    download_txt(f'https://tululu.org/b{id}/', id, folder='books/')
-        # download_txt(f'http://tululu.org/txt.php?id={id}/', folder='books/')
