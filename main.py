@@ -56,11 +56,13 @@ def download_img(url, folder):
     Path(folder).mkdir(parents=True, exist_ok=True) 
     soup = BeautifulSoup(response.text, 'lxml')
     try:
+        check_for_redirect(response)
         url = soup.find(class_="bookimage").find('a').find('img')['src']
         img_url = urljoin('https://tululu.org/', url)
 
         response_download = requests.get(img_url, allow_redirects=False)
         response_download.raise_for_status()
+        check_for_redirect(response_download)
         url = urlsplit(url)
         name_img = url.path.split('/')[-1]
         filepath = os.path.join(folder, name_img)
