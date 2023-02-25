@@ -17,7 +17,23 @@ def get_download_url(response):
     return download_url
 
 
-def download_img(response, folder='images/'):
+def download_comments(response):
+    book_comments = []
+    soup = BeautifulSoup(response.text, 'lxml')
+    comments = soup.find_all(class_="texts")
+    for comment in comments:
+        soup = BeautifulSoup(str(comment), 'lxml')
+        text_comment = soup.find(class_="black")
+        book_comments.append(text_comment.text)
+    return book_comments
+
+
+
+def download_img(url, folder):
+
+    response = requests.get(url, allow_redirects=False)
+    response.raise_for_status()
+
     Path(folder).mkdir(parents=True, exist_ok=True) 
     soup = BeautifulSoup(response.text, 'lxml')
     try:
@@ -26,14 +42,13 @@ def download_img(response, folder='images/'):
 
         response_download = requests.get(img_url, allow_redirects=False)
         response_download.raise_for_status()
-
-        name_img = url.split('/')[-1]
+        url = urlsplit(url)
+        name_img = url.path.split('/')[-1]
         filepath = os.path.join(folder, name_img)
         with open(filepath, 'wb') as file:
-            file.write(response.content)
+            file.write(response_download.content)
     except:
         print('Нет изображения')
-    return img_url
 
 
 def get_name_book(response):
@@ -47,7 +62,7 @@ def check_for_redirect(response):
         raise HTTPError
 
 
-def download_txt(url, id, folder='books/'):
+def download_txt(url, id, folder):
     Path(folder).mkdir(parents=True, exist_ok=True) 
     response = requests.get(url, allow_redirects=False)
     response.raise_for_status()
@@ -55,19 +70,17 @@ def download_txt(url, id, folder='books/'):
     try:
         check_for_redirect(response)
         name_book = sanitize_filename(f'{id}. {get_name_book(response)}.txt')
-    
         try:
             download_url = get_download_url(response)
             response_download = requests.get(download_url, allow_redirects=False)
             response_download.raise_for_status()
             check_for_redirect(response_download)
-
-
             filepath = os.path.join(folder, name_book)
             with open(filepath, 'wb') as file:
                 file.write(response_download.content)
-
-            download_img(response)
+            print(name_book)
+            for comment in download_comments(response):
+                print(comment)
         except:
             print('Error')
 
@@ -77,4 +90,5 @@ def download_txt(url, id, folder='books/'):
 
 if __name__ == "__main__":
     for id in range(1, 11):
-	    download_txt(f'https://tululu.org/b{id}/', id, folder='books/')
+        download_txt(f'https://tululu.org/b{id}/', id, folder='books/')
+        download_img(f'https://tululu.org/b{id}/', folder='images/')
