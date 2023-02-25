@@ -1,10 +1,11 @@
 import os
-from urllib.parse import urljoin, urlsplit
+import argparse
 import requests
-from pathvalidate import sanitize_filename
 from pathlib import Path
 from bs4 import BeautifulSoup
 from requests import HTTPError
+from urllib.parse import urljoin, urlsplit
+from pathvalidate import sanitize_filename
 
 
 def check_for_redirect(response):
@@ -78,6 +79,7 @@ def download_txt(url, id, folder):
         check_for_redirect(response)
         book_page = parse_book_page(response)
         name_book = book_page['name_book']
+        author = book_page['author']
         path_book = sanitize_filename(f'{id}. {name_book}.txt')
         try:
             download_url = get_download_url(response)
@@ -85,8 +87,13 @@ def download_txt(url, id, folder):
             response_download.raise_for_status()
             check_for_redirect(response_download)
             filepath = os.path.join(folder, path_book)
+
             with open(filepath, 'wb') as file:
                 file.write(response_download.content)
+
+            print(f'Название: {name_book}')
+            print(f'Автор: {author}')
+            print(' ')
         except:
             print('Error')
 
@@ -95,6 +102,10 @@ def download_txt(url, id, folder):
 
 
 if __name__ == "__main__":
-    for id in range(1, 11):
+    parser = argparse.ArgumentParser(description='Программа скачивает книги с сайта tululu.org')
+    parser.add_argument('start_id', help='Число с какой книги начинать', type=int, default=1)
+    parser.add_argument('end_id', help='Число до какой страницы закончить', type=int, default=11)
+    args = parser.parse_args()
+    for id in range(args.start_id, args.end_id):
         download_txt(f'https://tululu.org/b{id}/', id, folder='books/')
         download_img(f'https://tululu.org/b{id}/', folder='images/')
