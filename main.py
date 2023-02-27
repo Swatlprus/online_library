@@ -17,8 +17,8 @@ def get_download_url(url):
     response = requests.get(url, allow_redirects=False)
     response.raise_for_status()
     soup = BeautifulSoup(response.text, 'lxml')
-    url = soup.find('a', string="скачать txt")['href']
-    download_url = urljoin('https://tululu.org/', url)
+    book_url = soup.find('a', string="скачать txt")['href']
+    download_url = urljoin(url, book_url)
     return download_url
 
 
