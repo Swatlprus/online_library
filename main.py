@@ -109,6 +109,12 @@ if __name__ == "__main__":
             book_page = parse_book_page(url)
             download_txt(url, book_number, book_page, folder='books/')
             download_img(url, folder='images/')
+        except HTTPError:
+            print('HTTPError')
+            print(' ')
+        except AttributeError:
+            print('AttributeError')
+            print(' ')
         except:
-            print('Книги не существует')
+            print('Error')
             print(' ')
