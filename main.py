@@ -72,7 +72,7 @@ def download_img(url, folder):
         print('Нет изображения')
 
 
-def download_txt(url, id, folder):
+def download_txt(url, number_book, folder):
     Path(folder).mkdir(parents=True, exist_ok=True) 
     response = requests.get(url, allow_redirects=False)
     response.raise_for_status()
@@ -82,7 +82,7 @@ def download_txt(url, id, folder):
         book_page = parse_book_page(response)
         name_book = book_page['name_book']
         author = book_page['author']
-        path_book = sanitize_filename(f'{id}. {name_book}.txt')
+        path_book = sanitize_filename(f'{number_book}. {name_book}.txt')
         try:
             download_url = get_download_url(response)
             response_download = requests.get(download_url, allow_redirects=False)
@@ -108,6 +108,6 @@ if __name__ == "__main__":
     parser.add_argument('start_id', help='Число с какой книги начинать', type=int, default=1)
     parser.add_argument('end_id', help='Число до какой страницы закончить', type=int, default=11)
     args = parser.parse_args()
-    for id in range(args.start_id, args.end_id):
-        download_txt(f'https://tululu.org/b{id}/', id, folder='books/')
-        download_img(f'https://tululu.org/b{id}/', folder='images/')
+    for number_book in range(args.start_id, args.end_id):
+        download_txt(f'https://tululu.org/b{number_book}/', number_book, folder='books/')
+        download_img(f'https://tululu.org/b{number_book}/', folder='images/')
