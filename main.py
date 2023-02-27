@@ -9,21 +9,25 @@ from pathvalidate import sanitize_filename
 
 
 def check_for_redirect(response):
-    if response.status_code == 302 or response.status_code == 301:
+    if response.history:
         raise HTTPError
 
 
-def get_download_url(response):
+def get_download_url(url):
+    response = requests.get(url, allow_redirects=False)
+    response.raise_for_status()
     soup = BeautifulSoup(response.text, 'lxml')
-    try:
-        url = soup.find('a', string="скачать txt")['href']
-    except:
-        print('Нет книги')
+    url = soup.find('a', string="скачать txt")['href']
     download_url = urljoin('https://tululu.org/', url)
     return download_url
 
 
-def parse_book_page(response):
+def parse_book_page(url):
+    response = requests.get(url, allow_redirects=False)
+    response.raise_for_status()
+    check_for_redirect(response)
+
+
     book_comments = []
     book_category = []
     soup = BeautifulSoup(response.text, 'lxml')
@@ -40,12 +44,12 @@ def parse_book_page(response):
 
     categories = soup.find_all('span', class_="d_book")
     soup_category = BeautifulSoup(str(categories), 'lxml')
-    check = soup_category.find_all('a')
-    for category in check:
-        book_category.append(category.contents[0])
+    links_categories = soup_category.find_all('a')
+    for category in links_categories:
+        book_category.append(category.text)
 
-    info_book = {'name_book': name_book, 'author': author, 'comments': book_comments, 'category': book_category}
-    return info_book
+    page_book = {'name_book': name_book, 'author': author, 'comments': book_comments, 'category': book_category}
+    return page_book
 
 
 def download_img(url, folder):
@@ -55,53 +59,44 @@ def download_img(url, folder):
 
     Path(folder).mkdir(parents=True, exist_ok=True) 
     soup = BeautifulSoup(response.text, 'lxml')
-    try:
-        check_for_redirect(response)
-        url = soup.find(class_="bookimage").find('a').find('img')['src']
-        img_url = urljoin('https://tululu.org/', url)
 
-        response_download = requests.get(img_url, allow_redirects=False)
-        response_download.raise_for_status()
-        check_for_redirect(response_download)
-        url = urlsplit(url)
-        name_img = url.path.split('/')[-1]
-        filepath = os.path.join(folder, name_img)
-        with open(filepath, 'wb') as file:
-            file.write(response_download.content)
-    except:
-        print('Нет изображения')
+    check_for_redirect(response)
+    url = soup.find(class_="bookimage").find('a').find('img')['src']
+    img_url = urljoin('https://tululu.org/', url)
+
+    response_download = requests.get(img_url, allow_redirects=False)
+    response_download.raise_for_status()
+    check_for_redirect(response_download)
+
+    url = urlsplit(url)
+    name_img = url.path.split('/')[-1]
+    filepath = os.path.join(folder, name_img)
+    with open(filepath, 'wb') as file:
+        file.write(response_download.content)
 
 
-def download_txt(url, number_book, folder):
+def download_txt(url, number_book, book_page, folder):
     Path(folder).mkdir(parents=True, exist_ok=True) 
-    response = requests.get(url, allow_redirects=False)
-    response.raise_for_status()
 
-    try:
-        check_for_redirect(response)
-        book_page = parse_book_page(response)
-        name_book = book_page['name_book']
-        author = book_page['author']
-        path_book = sanitize_filename(f'{number_book}. {name_book}.txt')
-        try:
-            download_url = get_download_url(response)
-            response_download = requests.get(download_url, allow_redirects=False)
-            response_download.raise_for_status()
-            check_for_redirect(response_download)
-            filepath = os.path.join(folder, path_book)
+    name_book = book_page['name_book']
+    author = book_page['author']
+    category = book_page['category']
+    path_book = sanitize_filename(f'{number_book}. {name_book}.txt')
 
-            with open(filepath, 'wb') as file:
-                file.write(response_download.content)
+    download_url = get_download_url(url)
+    response_download = requests.get(download_url, allow_redirects=False)
+    response_download.raise_for_status()
+    check_for_redirect(response_download)
 
-            print(f'Название: {name_book}')
-            print(f'Автор: {author}')
-            print(' ')
-        except:
-            print('Error')
+    filepath = os.path.join(folder, path_book)
 
-    except HTTPError:
-        print('Ошибка 302')
+    with open(filepath, 'wb') as file:
+        file.write(response_download.content)
 
+    print(f'Название: {name_book}')
+    print(f'Автор: {author}')
+    print(f'Категория: {category}')
+    print(' ')
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Программа скачивает книги с сайта tululu.org')
@@ -109,5 +104,11 @@ if __name__ == "__main__":
     parser.add_argument('end_id', help='Число до какой страницы закончить', type=int, default=11)
     args = parser.parse_args()
     for number_book in range(args.start_id, args.end_id):
-        download_txt(f'https://tululu.org/b{number_book}/', number_book, folder='books/')
-        download_img(f'https://tululu.org/b{number_book}/', folder='images/')
+        url = f'https://tululu.org/b{number_book}/'
+        try:
+            book_page = parse_book_page(url)
+            download_txt(url, number_book, book_page, folder='books/')
+            download_img(url, folder='images/')
+        except:
+            print('Книги не существует')
+            print(' ')
