@@ -36,6 +36,9 @@ def parse_book_page(url):
     book_name = book_name.strip()
     author = author.strip()
 
+    url_img = soup.find(class_="bookimage").find('a').find('img')['src']
+    book_img_url = urljoin(url, url_img)
+
     comments = soup.find_all(class_="texts")
     for comment in comments:
         soup_comment = BeautifulSoup(str(comment), 'lxml')
@@ -48,27 +51,19 @@ def parse_book_page(url):
     for category in links_categories:
         book_category.append(category.text)
 
-    page_book = {'book_name': book_name, 'author': author, 'comments': book_comments, 'category': book_category}
+    page_book = {'book_name': book_name, 'author': author, 'book_img': book_img_url, 'comments': book_comments, 'category': book_category}
     return page_book
 
 
-def download_img(url, folder):
-
-    response = requests.get(url, allow_redirects=False)
-    response.raise_for_status()
-
+def download_img(url, book_page, folder):
     Path(folder).mkdir(parents=True, exist_ok=True) 
-    soup = BeautifulSoup(response.text, 'lxml')
 
-    check_for_redirect(response)
-    url = soup.find(class_="bookimage").find('a').find('img')['src']
-    img_url = urljoin('https://tululu.org/', url)
-
-    response_download = requests.get(img_url, allow_redirects=False)
+    book_img_url = book_page['book_img']
+    response_download = requests.get(book_img_url, allow_redirects=False)
     response_download.raise_for_status()
     check_for_redirect(response_download)
 
-    url = urlsplit(url)
+    url = urlsplit(book_img_url)
     name_img = url.path.split('/')[-1]
     filepath = os.path.join(folder, name_img)
     with open(filepath, 'wb') as file:
@@ -108,7 +103,7 @@ if __name__ == "__main__":
         try:
             book_page = parse_book_page(url)
             download_txt(url, book_number, book_page, folder='books/')
-            download_img(url, folder='images/')
+            download_img(url, book_page, folder='images/')
         except HTTPError:
             print('HTTPError')
             print(' ')
