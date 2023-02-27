@@ -1,9 +1,10 @@
 import os
+import time
 import argparse
 import requests
 from pathlib import Path
 from bs4 import BeautifulSoup
-from requests import HTTPError
+from requests import HTTPError, ConnectionError
 from urllib.parse import urljoin, urlsplit
 from pathvalidate import sanitize_filename
 
@@ -110,6 +111,15 @@ if __name__ == "__main__":
         except AttributeError:
             print('AttributeError')
             print(' ')
+        except ConnectionError:
+            print('ConnectionError')
+            time.sleep(5)
+            try:
+                book_page = parse_book_page(url)
+                download_txt(url, book_number, book_page, folder='books/')
+                download_img(url, book_page, folder='images/')
+            except ConnectionError:
+                print(ConnectionError)
         except:
             print('Error')
             print(' ')
