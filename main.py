@@ -32,8 +32,8 @@ def parse_book_page(url):
     book_category = []
     soup = BeautifulSoup(response.text, 'lxml')
 
-    name_book, author = soup.find('h1').text.split('::')
-    name_book = name_book.strip()
+    book_name, author = soup.find('h1').text.split('::')
+    book_name = book_name.strip()
     author = author.strip()
 
     comments = soup.find_all(class_="texts")
@@ -48,7 +48,7 @@ def parse_book_page(url):
     for category in links_categories:
         book_category.append(category.text)
 
-    page_book = {'name_book': name_book, 'author': author, 'comments': book_comments, 'category': book_category}
+    page_book = {'book_name': book_name, 'author': author, 'comments': book_comments, 'category': book_category}
     return page_book
 
 
@@ -75,13 +75,13 @@ def download_img(url, folder):
         file.write(response_download.content)
 
 
-def download_txt(url, number_book, book_page, folder):
+def download_txt(url, book_number, book_page, folder):
     Path(folder).mkdir(parents=True, exist_ok=True) 
 
-    name_book = book_page['name_book']
+    book_name = book_page['book_name']
     author = book_page['author']
     category = book_page['category']
-    path_book = sanitize_filename(f'{number_book}. {name_book}.txt')
+    path_book = sanitize_filename(f'{book_number}. {book_name}.txt')
 
     download_url = get_download_url(url)
     response_download = requests.get(download_url, allow_redirects=False)
@@ -93,7 +93,7 @@ def download_txt(url, number_book, book_page, folder):
     with open(filepath, 'wb') as file:
         file.write(response_download.content)
 
-    print(f'Название: {name_book}')
+    print(f'Название: {book_name}')
     print(f'Автор: {author}')
     print(f'Категория: {category}')
     print(' ')
@@ -103,11 +103,11 @@ if __name__ == "__main__":
     parser.add_argument('start_id', help='Число с какой книги начинать', type=int, default=1)
     parser.add_argument('end_id', help='Число до какой страницы закончить', type=int, default=11)
     args = parser.parse_args()
-    for number_book in range(args.start_id, args.end_id):
-        url = f'https://tululu.org/b{number_book}/'
+    for book_number in range(args.start_id, args.end_id):
+        url = f'https://tululu.org/b{book_number}/'
         try:
             book_page = parse_book_page(url)
-            download_txt(url, number_book, book_page, folder='books/')
+            download_txt(url, book_number, book_page, folder='books/')
             download_img(url, folder='images/')
         except:
             print('Книги не существует')
