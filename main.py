@@ -23,12 +23,7 @@ def get_download_url(url):
     return download_url
 
 
-def parse_book_page(url):
-    response = requests.get(url, allow_redirects=False)
-    response.raise_for_status()
-    check_for_redirect(response)
-
-
+def parse_book_page(response):
     book_comments = []
     book_category = []
     soup = BeautifulSoup(response.text, 'lxml')
@@ -102,7 +97,10 @@ if __name__ == "__main__":
     for book_number in range(args.start_id, args.end_id):
         url = f'https://tululu.org/b{book_number}/'
         try:
-            book_page = parse_book_page(url)
+            response = requests.get(url, allow_redirects=False)
+            response.raise_for_status()
+            check_for_redirect(response)
+            book_page = parse_book_page(response)
             download_txt(url, book_number, book_page, folder='books/')
             download_img(url, book_page, folder='images/')
         except HTTPError:
