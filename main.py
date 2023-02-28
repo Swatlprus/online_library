@@ -25,7 +25,7 @@ def get_download_url(url):
 
 def parse_book_page(response):
     book_comments = []
-    book_category = []
+    book_categories = []
     soup = BeautifulSoup(response.text, 'lxml')
 
     book_name, author = soup.find('h1').text.split('::')
