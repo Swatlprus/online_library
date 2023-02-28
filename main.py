@@ -32,8 +32,8 @@ def parse_book_page(response):
     book_name = book_name.strip()
     author = author.strip()
 
-    url_img = soup.find(class_="bookimage").find('a').find('img')['src']
-    book_img_url = urljoin(url, url_img)
+    img_url = soup.find(class_="bookimage").find('a').find('img')['src']
+    book_img_url = urljoin(url, img_url)
 
     comments = soup.find_all(class_="texts")
     for comment in comments:
@@ -60,8 +60,8 @@ def download_img(url, book_page, folder):
     check_for_redirect(response_download)
 
     url = urlsplit(book_img_url)
-    name_img = url.path.split('/')[-1]
-    filepath = os.path.join(folder, name_img)
+    img_name = url.path.split('/')[-1]
+    filepath = os.path.join(folder, img_name)
     with open(filepath, 'wb') as file:
         file.write(response_download.content)
 
