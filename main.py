@@ -1,4 +1,5 @@
 import os
+import sys
 import time
 import argparse
 import requests
@@ -45,9 +46,9 @@ def parse_book_page(response):
     soup_category = BeautifulSoup(str(categories), 'lxml')
     links_categories = soup_category.find_all('a')
     for category in links_categories:
-        book_category.append(category.text)
+        book_categories.append(category.text)
 
-    page_book = {'book_name': book_name, 'author': author, 'book_img': book_img_url, 'comments': book_comments, 'category': book_category}
+    page_book = {'book_name': book_name, 'author': author, 'book_img': book_img_url, 'comments': book_comments, 'category': book_categories}
     return page_book
 
 
@@ -103,21 +104,22 @@ if __name__ == "__main__":
             book_page = parse_book_page(response)
             download_txt(url, book_number, book_page, folder='books/')
             download_img(url, book_page, folder='images/')
-        except HTTPError:
+        except HTTPError as err:
+            print(err.__str__(), file=sys.stderr)
             print('HTTPError')
             print(' ')
-        except AttributeError:
+        except AttributeError as err:
+            print(err.__str__(), file=sys.stderr)
             print('AttributeError')
             print(' ')
-        except ConnectionError:
+        except ConnectionError as err:
+            print(err.__str__(), file=sys.stderr)
             print('ConnectionError')
             time.sleep(5)
             try:
                 book_page = parse_book_page(url)
                 download_txt(url, book_number, book_page, folder='books/')
                 download_img(url, book_page, folder='images/')
-            except ConnectionError:
+            except ConnectionError as err:
+                print(err.__str__(), file=sys.stderr)
                 print(ConnectionError)
-        except:
-            print('Error')
-            print(' ')
