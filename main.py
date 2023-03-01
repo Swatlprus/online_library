@@ -67,9 +67,6 @@ def download_txt(book_number, book_name, author, categories, download_url, folde
     with open(filepath, 'wb') as file:
         file.write(response.content)
     
-    context = {'book_name': book_name, 'author': author, 'categories': categories}
-
-    return context
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Программа скачивает книги с сайта tululu.org')
@@ -92,11 +89,6 @@ if __name__ == "__main__":
 
             download_book = download_txt(book_number, book_name, author, categories, download_url, folder='books/')
             download_img(url, book_img_url, folder='images/')
-
-            print(download_book['book_name'])
-            print(download_book['author'])
-            print(download_book['categories'])
-            print('')
         except HTTPError as err:
             print(err.__str__(), file=sys.stderr)
             print('HTTPError')
