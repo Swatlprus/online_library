@@ -5,9 +5,9 @@ import argparse
 import requests
 from pathlib import Path
 from bs4 import BeautifulSoup
-from requests import HTTPError, ConnectionError
 from urllib.parse import urljoin, urlsplit
 from pathvalidate import sanitize_filename
+from requests import HTTPError, ConnectionError
 
 
 def check_for_redirect(response):
@@ -45,29 +45,29 @@ def parse_book_page(response):
 def download_img(url, book_img_url, folder):
     Path(folder).mkdir(parents=True, exist_ok=True) 
 
-    response_download = requests.get(book_img_url, allow_redirects=False)
-    response_download.raise_for_status()
-    check_for_redirect(response_download)
+    response = requests.get(book_img_url, allow_redirects=False)
+    response.raise_for_status()
+    check_for_redirect(response)
 
     url = urlsplit(book_img_url)
     img_name = url.path.split('/')[-1]
     filepath = os.path.join(folder, img_name)
     with open(filepath, 'wb') as file:
-        file.write(response_download.content)
+        file.write(response.content)
 
 
-def download_txt(book_number, book_name, author, category, download_url, folder='books/'):
+def download_txt(book_number, book_name, author, categories, download_url, folder='books/'):
     Path(folder).mkdir(parents=True, exist_ok=True) 
     path_book = sanitize_filename(f'{book_number}. {book_name}.txt')
 
-    response_download = requests.get(download_url, allow_redirects=False)
-    response_download.raise_for_status()
-    check_for_redirect(response_download)
+    response = requests.get(download_url, allow_redirects=False)
+    response.raise_for_status()
+    check_for_redirect(response)
 
     filepath = os.path.join(folder, path_book)
 
     with open(filepath, 'wb') as file:
-        file.write(response_download.content)
+        file.write(response.content)
     
     context = {'book_name': book_name, 'author': author, 'categories': categories}
 
@@ -93,11 +93,12 @@ if __name__ == "__main__":
             book_img_url = book_page['book_img']
 
             download_book = download_txt(book_number, book_name, author, categories, download_url, folder='books/')
+            download_img(url, book_img_url, folder='images/')
+
             print(download_book['book_name'])
             print(download_book['author'])
             print(download_book['categories'])
             print('')
-            download_img(url, book_img_url, folder='images/')
         except HTTPError as err:
             print(err.__str__(), file=sys.stderr)
             print('HTTPError')
@@ -113,11 +114,18 @@ if __name__ == "__main__":
         except ConnectionError as err:
             print(err.__str__(), file=sys.stderr)
             print('ConnectionError')
+            print('TIME SLLEP 5 SECONDS')
+            print(' ')
             time.sleep(5)
             try:
-                book_page = parse_book_page(url)
-                download_txt(url, book_number, book_page, folder='books/')
-                download_img(url, book_page, folder='images/')
+                download_book = download_txt(book_number, book_name, author, categories, download_url, folder='books/')
+                download_img(url, book_img_url, folder='images/')
+
+                print(download_book['book_name'])
+                print(download_book['author'])
+                print(download_book['categories'])
+                print('')
             except ConnectionError as err:
                 print(err.__str__(), file=sys.stderr)
-                print(ConnectionError)
+                print('ConnectionError')
+                print(' ')
