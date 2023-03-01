@@ -31,12 +31,10 @@ def parse_book_page(response):
     book_img_url = urljoin(url, img_url)
 
     comments = soup.find_all(class_="texts")
-    for comment in comments:
-        book_comments.append(comment.span.text)
+    book_comments = [comment.span.text for comment in comments]
 
     categories = soup.find('span', class_="d_book").find_all('a')
-    for category in categories:
-        book_categories.append(category.text)
+    book_categories = [category.text for category in categories]
     
     page_book = {'book_name': book_name, 'author': author, 'download_url': download_url, 'book_img': book_img_url, 'comments': book_comments, 'categories': book_categories}
     return page_book
