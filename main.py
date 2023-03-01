@@ -38,14 +38,10 @@ def parse_book_page(response):
 
     comments = soup.find_all(class_="texts")
     for comment in comments:
-        soup_comment = BeautifulSoup(str(comment), 'lxml')
-        text_comment = soup_comment.find(class_="black")
-        book_comments.append(text_comment.text)
+        book_comments.append(comment.span.text)
 
-    categories = soup.find_all('span', class_="d_book")
-    soup_category = BeautifulSoup(str(categories), 'lxml')
-    links_categories = soup_category.find_all('a')
-    for category in links_categories:
+    categories = soup.find('span', class_="d_book").find_all('a')
+    for category in categories:
         book_categories.append(category.text)
 
     page_book = {'book_name': book_name, 'author': author, 'book_img': book_img_url, 'comments': book_comments, 'category': book_categories}
@@ -111,6 +107,10 @@ if __name__ == "__main__":
         except AttributeError as err:
             print(err.__str__(), file=sys.stderr)
             print('AttributeError')
+            print(' ')
+        except TypeError as err:
+            print(err.__str__(), file=sys.stderr)
+            print('TypeError')
             print(' ')
         except ConnectionError as err:
             print(err.__str__(), file=sys.stderr)
