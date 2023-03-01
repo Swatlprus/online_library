@@ -75,48 +75,36 @@ if __name__ == "__main__":
     args = parser.parse_args()
     for book_number in range(args.start_id, args.end_id):
         url = f'https://tululu.org/b{book_number}/'
-        try:
-            response = requests.get(url, allow_redirects=False)
-            response.raise_for_status()
-            check_for_redirect(response)
-
-            book_page = parse_book_page(response, url)
-            book_name = book_page['book_name']
-            author = book_page['author']
-            categories = book_page['categories']
-            download_url = book_page['download_url']
-            book_img_url = book_page['book_img']
-
-            download_book = download_txt(book_number, book_name, author, categories, download_url, folder='books/')
-            download_img(url, book_img_url, folder='images/')
-        except HTTPError as err:
-            print(err.__str__(), file=sys.stderr)
-            print('HTTPError')
-            print(' ')
-        except AttributeError as err:
-            print(err.__str__(), file=sys.stderr)
-            print('AttributeError')
-            print(' ')
-        except TypeError as err:
-            print(err.__str__(), file=sys.stderr)
-            print('TypeError')
-            print(' ')
-        except ConnectionError as err:
-            print(err.__str__(), file=sys.stderr)
-            print('ConnectionError')
-            print('TIME SLLEP 5 SECONDS')
-            print(' ')
+        for i in range(3):
+            time.sleep(5)
             try:
-                for i in range(5):
-                    time.sleep(5)
-                    download_book = download_txt(book_number, book_name, author, categories, download_url, folder='books/')
-                    download_img(url, book_img_url, folder='images/')
+                response = requests.get(url, allow_redirects=False)
+                response.raise_for_status()
+                check_for_redirect(response)
 
-                    print(download_book['book_name'])
-                    print(download_book['author'])
-                    print(download_book['categories'])
-                    print('')
+                book_page = parse_book_page(response, url)
+                book_name = book_page['book_name']
+                author = book_page['author']
+                categories = book_page['categories']
+                download_url = book_page['download_url']
+                book_img_url = book_page['book_img']
+
+                download_book = download_txt(book_number, book_name, author, categories, download_url, folder='books/')
+                download_img(url, book_img_url, folder='images/')
+            except HTTPError as err:
+                print(err.__str__(), file=sys.stderr)
+                print('HTTPError')
+                print(' ')
+            except AttributeError as err:
+                print(err.__str__(), file=sys.stderr)
+                print('AttributeError')
+                print(' ')
+            except TypeError as err:
+                print(err.__str__(), file=sys.stderr)
+                print('TypeError')
+                print(' ')
             except ConnectionError as err:
                 print(err.__str__(), file=sys.stderr)
                 print('ConnectionError')
+                print('TIME SLLEP 5 SECONDS')
                 print(' ')
