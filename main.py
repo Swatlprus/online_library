@@ -40,7 +40,7 @@ def parse_book_page(response, url):
     return page_book
 
 
-def download_img(url, book_img_url, folder):
+def download_img(book_img_url, folder):
     Path(folder).mkdir(parents=True, exist_ok=True) 
 
     response = requests.get(book_img_url, allow_redirects=False)
