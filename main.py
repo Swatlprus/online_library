@@ -15,7 +15,7 @@ def check_for_redirect(response):
         raise HTTPError
     
 
-def parse_book_page(response):
+def parse_book_page(response, url):
     book_comments = []
     book_categories = []
     soup = BeautifulSoup(response.text, 'lxml')
@@ -83,7 +83,7 @@ if __name__ == "__main__":
             response.raise_for_status()
             check_for_redirect(response)
 
-            book_page = parse_book_page(response)
+            book_page = parse_book_page(response, url)
             book_name = book_page['book_name']
             author = book_page['author']
             categories = book_page['categories']
