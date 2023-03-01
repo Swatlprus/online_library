@@ -38,7 +38,7 @@ def parse_book_page(response):
     for category in categories:
         book_categories.append(category.text)
     
-    page_book = {'book_name': book_name, 'author': author, 'download_url': download_url, 'book_img': book_img_url, 'comments': book_comments, 'category': book_categories}
+    page_book = {'book_name': book_name, 'author': author, 'download_url': download_url, 'book_img': book_img_url, 'comments': book_comments, 'categories': book_categories}
     return page_book
 
 
@@ -68,11 +68,10 @@ def download_txt(book_number, book_name, author, category, download_url, folder=
 
     with open(filepath, 'wb') as file:
         file.write(response_download.content)
+    
+    context = {'book_name': book_name, 'author': author, 'categories': categories}
 
-    print(f'Название: {book_name}')
-    print(f'Автор: {author}')
-    print(f'Категория: {category}')
-    print(' ')
+    return context
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Программа скачивает книги с сайта tululu.org')
@@ -89,11 +88,15 @@ if __name__ == "__main__":
             book_page = parse_book_page(response)
             book_name = book_page['book_name']
             author = book_page['author']
-            category = book_page['category']
+            categories = book_page['categories']
             download_url = book_page['download_url']
             book_img_url = book_page['book_img']
 
-            download_txt(book_number, book_name, author, category, download_url, folder='books/')
+            download_book = download_txt(book_number, book_name, author, categories, download_url, folder='books/')
+            print(download_book['book_name'])
+            print(download_book['author'])
+            print(download_book['categories'])
+            print('')
             download_img(url, book_img_url, folder='images/')
         except HTTPError as err:
             print(err.__str__(), file=sys.stderr)
