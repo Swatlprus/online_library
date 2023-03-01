@@ -13,16 +13,7 @@ from pathvalidate import sanitize_filename
 def check_for_redirect(response):
     if response.history:
         raise HTTPError
-
-
-def get_download_url(url):
-    response = requests.get(url, allow_redirects=False)
-    response.raise_for_status()
-    soup = BeautifulSoup(response.text, 'lxml')
-    book_url = soup.find('a', string="скачать txt")['href']
-    download_url = urljoin(url, book_url)
-    return download_url
-
+    
 
 def parse_book_page(response):
     book_comments = []
@@ -32,6 +23,9 @@ def parse_book_page(response):
     book_name, author = soup.find('h1').text.split('::')
     book_name = book_name.strip()
     author = author.strip()
+
+    book_url = soup.find('a', string="скачать txt")['href']
+    download_url = urljoin(url, book_url)
 
     img_url = soup.find(class_="bookimage").find('a').find('img')['src']
     book_img_url = urljoin(url, img_url)
@@ -43,15 +37,14 @@ def parse_book_page(response):
     categories = soup.find('span', class_="d_book").find_all('a')
     for category in categories:
         book_categories.append(category.text)
-
-    page_book = {'book_name': book_name, 'author': author, 'book_img': book_img_url, 'comments': book_comments, 'category': book_categories}
+    
+    page_book = {'book_name': book_name, 'author': author, 'download_url': download_url, 'book_img': book_img_url, 'comments': book_comments, 'category': book_categories}
     return page_book
 
 
-def download_img(url, book_page, folder):
+def download_img(url, book_img_url, folder):
     Path(folder).mkdir(parents=True, exist_ok=True) 
 
-    book_img_url = book_page['book_img']
     response_download = requests.get(book_img_url, allow_redirects=False)
     response_download.raise_for_status()
     check_for_redirect(response_download)
@@ -63,15 +56,10 @@ def download_img(url, book_page, folder):
         file.write(response_download.content)
 
 
-def download_txt(url, book_number, book_page, folder):
+def download_txt(book_number, book_name, author, category, download_url, folder='books/'):
     Path(folder).mkdir(parents=True, exist_ok=True) 
-
-    book_name = book_page['book_name']
-    author = book_page['author']
-    category = book_page['category']
     path_book = sanitize_filename(f'{book_number}. {book_name}.txt')
 
-    download_url = get_download_url(url)
     response_download = requests.get(download_url, allow_redirects=False)
     response_download.raise_for_status()
     check_for_redirect(response_download)
@@ -97,9 +85,16 @@ if __name__ == "__main__":
             response = requests.get(url, allow_redirects=False)
             response.raise_for_status()
             check_for_redirect(response)
+
             book_page = parse_book_page(response)
-            download_txt(url, book_number, book_page, folder='books/')
-            download_img(url, book_page, folder='images/')
+            book_name = book_page['book_name']
+            author = book_page['author']
+            category = book_page['category']
+            download_url = book_page['download_url']
+            book_img_url = book_page['book_img']
+
+            download_txt(book_number, book_name, author, category, download_url, folder='books/')
+            download_img(url, book_img_url, folder='images/')
         except HTTPError as err:
             print(err.__str__(), file=sys.stderr)
             print('HTTPError')
