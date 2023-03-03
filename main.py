@@ -40,7 +40,7 @@ def parse_book_page(response, url):
     return page_book
 
 
-def download_img(book_img_url, folder):
+def download_img(url, book_img_url, folder):
     Path(folder).mkdir(parents=True, exist_ok=True) 
 
     response = requests.get(book_img_url, allow_redirects=False)
@@ -52,9 +52,10 @@ def download_img(book_img_url, folder):
     filepath = os.path.join(folder, img_name)
     with open(filepath, 'wb') as file:
         file.write(response.content)
+    return filepath
 
 
-def download_txt(book_number, book_name, author, categories, download_url, folder='books/'):
+def download_txt(book_number, book_name, download_url, folder='books/'):
     Path(folder).mkdir(parents=True, exist_ok=True) 
     path_book = sanitize_filename(f'{book_number}. {book_name}.txt')
 
@@ -87,8 +88,9 @@ if __name__ == "__main__":
             download_url = book_page['download_url']
             book_img_url = book_page['book_img']
 
-            download_book = download_txt(book_number, book_name, author, categories, download_url, folder='books/')
+            download_book = download_txt(book_number, book_name, download_url, folder='books/')
             download_img(url, book_img_url, folder='images/')
+            print(download_book)
         except HTTPError as err:
             print(err.__str__(), file=sys.stderr)
             print('HTTPError')
@@ -97,12 +99,12 @@ if __name__ == "__main__":
         except AttributeError as err:
             print(err.__str__(), file=sys.stderr)
             print('AttributeError')
-            print('Несуществующий атрибут')
+            print('На странице нет книги')
             print(' ')
         except TypeError as err:
             print(err.__str__(), file=sys.stderr)
             print('TypeError')
-            print('Объекты принадлежать к разным типам данным')
+            print('На странице нет книги для скачивания')
             print(' ')
         except ConnectionError as err:
             print(err.__str__(), file=sys.stderr)
