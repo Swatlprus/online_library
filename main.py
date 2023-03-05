@@ -9,6 +9,11 @@ from urllib.parse import urljoin, urlsplit
 from pathvalidate import sanitize_filename
 from requests import HTTPError, ConnectionError
 
+class BookNameError(AttributeError):
+    pass
+
+class BookUrlError(AttributeError):
+    pass
 
 def check_for_redirect(response):
     if response.history:
@@ -20,12 +25,18 @@ def parse_book_page(response, url):
     book_categories = []
     soup = BeautifulSoup(response.text, 'lxml')
 
-    book_name, author = soup.find('h1').text.split('::')
-    book_name = book_name.strip()
-    author = author.strip()
+    try:
+        book_name, author = soup.find('h1').text.split('::')
+        book_name = book_name.strip()
+        author = author.strip()
+    except:
+        raise BookNameError()
 
-    book_url = soup.find('a', string="скачать txt")['href']
-    download_url = urljoin(url, book_url)
+    try:
+        book_url = soup.find('a', string="скачать txt")['href']
+        download_url = urljoin(url, book_url)
+    except:
+        raise BookUrlError()
 
     img_url = soup.find(class_="bookimage").find('a').find('img')['src']
     book_img_url = urljoin(url, img_url)
@@ -90,25 +101,17 @@ if __name__ == "__main__":
 
             download_book = download_txt(book_number, book_name, download_url, folder='books/')
             download_img(url, book_img_url, folder='images/')
-            print(download_book)
+            print(f'Книга со страницы {book_number} скачана')
         except HTTPError as err:
             print(err.__str__(), file=sys.stderr)
             print('HTTPError')
             print('Данной ссылки не существует')
-            print(' ')
-        except AttributeError as err:
-            print(err.__str__(), file=sys.stderr)
-            print('AttributeError')
-            print('На странице нет книги')
-            print(' ')
-        except TypeError as err:
-            print(err.__str__(), file=sys.stderr)
-            print('TypeError')
-            print('На странице нет книги для скачивания')
-            print(' ')
+        except BookNameError as err:
+            print(f'Название книги не найденно на странице. Номер страницы {book_number}')
+        except BookUrlError as err:
+            print(f'Нет ссылки для скачивания книги. Номер страницы {book_number}')
         except ConnectionError as err:
             print(err.__str__(), file=sys.stderr)
             print('ConnectionError')
             print('Ошибка: Разрыв связи')
-            print(' ')
             time.sleep(10)
