@@ -27,16 +27,16 @@ def parse_book_page(response, url):
 
     try:
         book_name, author = soup.find('h1').text.split('::')
-        book_name = book_name.strip()
-        author = author.strip()
     except AttributeError:
         raise BookNameError()
+    book_name = book_name.strip()
+    author = author.strip()
 
     try:
         book_url = soup.find('a', string="скачать txt")['href']
-        download_url = urljoin(url, book_url)
     except TypeError:
         raise BookUrlError()
+    download_url = urljoin(url, book_url)
 
     img_url = soup.find(class_="bookimage").find('a').find('img')['src']
     book_img_url = urljoin(url, img_url)
