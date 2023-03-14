@@ -12,7 +12,7 @@ from requests import HTTPError, ConnectionError
 class BookNameError(AttributeError):
     pass
 
-class BookUrlError(AttributeError):
+class BookUrlError(TypeError):
     pass
 
 def check_for_redirect(response):
@@ -47,7 +47,8 @@ def parse_book_page(response, url):
     categories = soup.find('span', class_="d_book").find_all('a')
     book_categories = [category.text for category in categories]
     
-    page_book = {'book_name': book_name, 'author': author, 'download_url': download_url, 'book_img': book_img_url, 'comments': book_comments, 'categories': book_categories}
+    # page_book = {'book_name': book_name, 'author': author, 'download_url': download_url, 'book_img': book_img_url, 'comments': book_comments, 'categories': book_categories}
+    page_book = {"title": book_name, "author": author, "book_img_url": book_img_url, "download_url": download_url, "comments": book_comments, "genres": book_categories}
     return page_book
 
 
@@ -78,6 +79,7 @@ def download_txt(book_number, book_name, download_url, folder='books/'):
 
     with open(filepath, 'wb') as file:
         file.write(response.content)
+    return filepath
     
 
 if __name__ == "__main__":
