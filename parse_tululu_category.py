@@ -12,8 +12,8 @@ from main import parse_book_page, download_txt, download_img, check_for_redirect
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Программа скачивает книги с сайта tululu.org')
-    parser.add_argument('start_page', help='Число с какой страницы начинать', type=int, default=1)
-    parser.add_argument('end_page', help='Число до какой страницы закончить', type=int, default=1000)
+    parser.add_argument('--start_page', help='Число с какой страницы начинать', type=int, default=1)
+    parser.add_argument('--end_page', help='Число до какой страницы закончить', type=int, default=1000)
     parser.add_argument('--dest_folder', help='Путь к каталогу с результатами парсинга: картинкам, книгам, JSON.', default='./')
     parser.add_argument('--skip_imgs', help='Не скачивать картинки', type=bool, default=False)
     parser.add_argument('--skip_txt', help='Не скачивать книги', type=bool, default=False)
