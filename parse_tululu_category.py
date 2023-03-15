@@ -1,11 +1,12 @@
+import os
 import sys
 import time
 import json
 import argparse
 import requests
 from bs4 import BeautifulSoup
-from urllib.parse import urljoin
 from requests import HTTPError
+from urllib.parse import urljoin
 from main import parse_book_page, download_txt, download_img, check_for_redirect, BookNameError, BookUrlError
 
 
@@ -13,6 +14,10 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Программа скачивает книги с сайта tululu.org')
     parser.add_argument('start_page', help='Число с какой страницы начинать', type=int, default=1)
     parser.add_argument('end_page', help='Число до какой страницы закончить', type=int, default=1000)
+    parser.add_argument('--dest_folder', help='Путь к каталогу с результатами парсинга: картинкам, книгам, JSON.', default='./')
+    parser.add_argument('--skip_imgs', help='Не скачивать картинки', type=bool, default=False)
+    parser.add_argument('--skip_txt', help='Не скачивать книги', type=bool, default=False)
+    parser.add_argument('--json_path', help='Указать свой путь к *.json файлу с результатами', default='./books.json')
     args = parser.parse_args()
     books = []
     books_url = []
@@ -40,8 +45,16 @@ if __name__ == "__main__":
             download_url = book_page['download_url']
             book_img_url = book_page['book_img_url']
 
-            book_path = download_txt(book_number, title, download_url, folder='books/')
-            img_src = download_img(url, book_img_url, folder='images/')
+            if not args.skip_txt:
+                path_books = os.path.join(args.dest_folder, 'books/')
+                book_path = download_txt(book_number, title, download_url, folder=path_books)
+            else:
+                book_path = None
+            if not args.skip_imgs:
+                path_images = os.path.join(args.dest_folder, 'images/')
+                img_src = download_img(url, book_img_url, folder=path_images)
+            else:
+                img_src = None
 
             if book_path:
                 page_book = {"title": title, "author": author, "img_src": img_src, "book_path": book_path, "comments": comments, "genres": genres}
@@ -63,6 +76,5 @@ if __name__ == "__main__":
             time.sleep(10)
 
     books_json = json.dumps(books, ensure_ascii=False)
-
-    with open("books.json", "w+", encoding='utf8') as my_file:
+    with open(os.path.join(args.dest_folder, args.json_path), "w+", encoding='utf8') as my_file:
         my_file.write(books_json)
