@@ -26,28 +26,27 @@ def parse_book_page(response, url):
     soup = BeautifulSoup(response.text, 'lxml')
 
     try:
-        book_name, author = soup.find('h1').text.split('::')
+        book_name, author = soup.select_one('h1').text.split('::')
     except AttributeError:
         raise BookNameError()
     book_name = book_name.strip()
     author = author.strip()
 
     try:
-        book_url = soup.find('a', string="скачать txt")['href']
+        book_url = soup.select_one('a:-soup-contains("скачать txt")')['href']
     except TypeError:
         raise BookUrlError()
     download_url = urljoin(url, book_url)
 
-    img_url = soup.find(class_="bookimage").find('a').find('img')['src']
+    img_url = soup.select_one('.bookimage a img')['src']
     book_img_url = urljoin(url, img_url)
 
-    comments = soup.find_all(class_="texts")
+    comments = soup.select('.texts')
     book_comments = [comment.span.text for comment in comments]
 
-    categories = soup.find('span', class_="d_book").find_all('a')
+    categories = soup.select('.d_book > a')
     book_categories = [category.text for category in categories]
-    
-    # page_book = {'book_name': book_name, 'author': author, 'download_url': download_url, 'book_img': book_img_url, 'comments': book_comments, 'categories': book_categories}
+
     page_book = {"title": book_name, "author": author, "book_img_url": book_img_url, "download_url": download_url, "comments": book_comments, "genres": book_categories}
     return page_book
 
@@ -95,13 +94,14 @@ if __name__ == "__main__":
             check_for_redirect(response)
 
             book_page = parse_book_page(response, url)
-            book_name = book_page['book_name']
+            title = book_page['title']
             author = book_page['author']
-            categories = book_page['categories']
+            genres = book_page['genres']
+            comments = book_page['comments']
             download_url = book_page['download_url']
-            book_img_url = book_page['book_img']
+            book_img_url = book_page['book_img_url']
 
-            download_book = download_txt(book_number, book_name, download_url, folder='books/')
+            download_book = download_txt(book_number, title, download_url, folder='books/')
             download_img(url, book_img_url, folder='images/')
             print(f'Книга со страницы {book_number} скачана')
         except HTTPError as err:

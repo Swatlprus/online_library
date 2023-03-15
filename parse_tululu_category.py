@@ -11,13 +11,13 @@ from main import parse_book_page, download_txt, download_img, check_for_redirect
 if __name__ == "__main__":
     books = []
     books_url = []
-    for page_number in range(1,5):
+    for page_number in range(1,2):
         url = f'https://tululu.org/l55/{page_number}'
         response = requests.get(url, allow_redirects=False)
         response.raise_for_status()
         soup = BeautifulSoup(response.text, 'lxml')
         check_for_redirect(response)
-        books_id = soup.find_all(class_='d_book')
+        books_id = soup.select('.d_book')
         for book_id in books_id:
             books_url.append(urljoin(url, book_id.a['href']))
 
