@@ -15,8 +15,8 @@ if __name__ == "__main__":
     parser.add_argument('--start_page', help='Число с какой страницы начинать', type=int, default=1)
     parser.add_argument('--end_page', help='Число до какой страницы закончить', type=int, default=1000)
     parser.add_argument('--dest_folder', help='Путь к каталогу с результатами парсинга: картинкам, книгам, JSON.', default='./')
-    parser.add_argument('--skip_imgs', help='Не скачивать картинки', type=bool, default=False)
-    parser.add_argument('--skip_txt', help='Не скачивать книги', type=bool, default=False)
+    parser.add_argument('--skip_imgs', help='Не скачивать картинки', action='store_false')
+    parser.add_argument('--skip_txt', help='Не скачивать книги', action='store_false')
     parser.add_argument('--json_path', help='Указать свой путь к *.json файлу с результатами', default='./books.json')
     args = parser.parse_args()
     books = []
