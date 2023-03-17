@@ -48,7 +48,6 @@ if __name__ == "__main__":
 
     for book_number, book_url in enumerate(books_url, start=1):
         try:
-            print('START')
             response = requests.get(book_url, allow_redirects=False)
             response.raise_for_status()
             check_for_redirect(response)
@@ -72,7 +71,7 @@ if __name__ == "__main__":
             else:
                 img_src = None
 
-            if book_path:
+            if book_path is None:
                 page_book = {"title": title, "author": author, "img_src": img_src, "book_path": book_path, "comments": comments, "genres": genres}
                 books.append(page_book)
 
@@ -95,6 +94,5 @@ if __name__ == "__main__":
             print('Ошибка: Разрыв связи')
             time.sleep(3)
 
-    books_json = json.dumps(books, ensure_ascii=False)
-    with open(os.path.join(args.dest_folder, args.json_path), "w+", encoding='utf8') as my_file:
-        my_file.write(books_json)
+    with open(os.path.join(args.dest_folder, args.json_path), "w+", encoding='utf8') as fp:
+        json.dump(books, fp, ensure_ascii=False)
