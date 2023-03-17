@@ -4,6 +4,7 @@ import time
 import json
 import argparse
 import requests
+from urllib3.exceptions import NewConnectionError
 from bs4 import BeautifulSoup
 from requests import HTTPError
 from urllib.parse import urljoin
@@ -23,16 +24,31 @@ if __name__ == "__main__":
     books_url = []
     for page_number in range(args.start_page, args.end_page):
         url = f'https://tululu.org/l55/{page_number}'
-        response = requests.get(url, allow_redirects=False)
-        response.raise_for_status()
-        soup = BeautifulSoup(response.text, 'lxml')
-        check_for_redirect(response)
-        books_id = soup.select('.d_book')
-        for book_id in books_id:
-            books_url.append(urljoin(url, book_id.a['href']))
+        try:
+            response = requests.get(url, allow_redirects=False)
+            response.raise_for_status()
+            soup = BeautifulSoup(response.text, 'lxml')
+            check_for_redirect(response)
+            books_id = soup.select('.d_book')
+            for book_id in books_id:
+                books_url.append(urljoin(url, book_id.a['href']))
+        except HTTPError as err:
+            print(err.__str__(), file=sys.stderr)
+            print('HTTPError')
+            print('Данной ссылки не существует')
+        except ConnectionError as err:
+            print(err.__str__(), file=sys.stderr)
+            print('ConnectionError')
+            print('Ошибка: Разрыв связи')
+            time.sleep(10)
+        except NewConnectionError as err:
+            print('NewConnectionError')
+            print('Ошибка: Разрыв связи')
+            time.sleep(3)
 
     for book_number, book_url in enumerate(books_url, start=1):
         try:
+            print('START')
             response = requests.get(book_url, allow_redirects=False)
             response.raise_for_status()
             check_for_redirect(response)
@@ -73,7 +89,11 @@ if __name__ == "__main__":
             print(err.__str__(), file=sys.stderr)
             print('ConnectionError')
             print('Ошибка: Разрыв связи')
-            time.sleep(10)
+            time.sleep(3)
+        except NewConnectionError as err:
+            print('NewConnectionError')
+            print('Ошибка: Разрыв связи')
+            time.sleep(3)
 
     books_json = json.dumps(books, ensure_ascii=False)
     with open(os.path.join(args.dest_folder, args.json_path), "w+", encoding='utf8') as my_file:
