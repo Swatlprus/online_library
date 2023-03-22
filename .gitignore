@@ -137,7 +137,6 @@ dmypy.json
 # Cython debug symbols
 cython_debug/
 
-/books
-/images
+/media
 test.py
 books.json
